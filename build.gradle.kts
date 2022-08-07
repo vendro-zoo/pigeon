@@ -20,7 +20,7 @@ dependencies {
     implementation("io.ktor:ktor-server-netty:2.0.3")
     implementation("io.ktor:ktor-server-status-pages:2.0.3")
 
-    implementation("it.zoo.vendro:racoon:master-e8de0c3")
+    implementation("it.zoo.vendro:racoon:dev-0.1.5-cf88425")
 
     testImplementation(kotlin("test"))
 }

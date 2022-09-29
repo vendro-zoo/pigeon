@@ -13,7 +13,7 @@ import kotlin.reflect.KClass
 abstract class Endpoint<R : RawInput<I>, I : Any, O : Any>(
     private val kRawInput: KClass<R>,
 ) : ResponseIntegration {
-    suspend fun call(call: ApplicationCall) {
+    open suspend fun call(call: ApplicationCall) {
         val rawInput = getRawInput(call)
 
 
@@ -30,11 +30,11 @@ abstract class Endpoint<R : RawInput<I>, I : Any, O : Any>(
         }
     }
 
-    suspend fun getRawInput(call: ApplicationCall): R = call.receive(kRawInput)
+    open suspend fun getRawInput(call: ApplicationCall): R = call.receive(kRawInput)
 
-    fun getInput(rawInput: R, context: EndpointContext): I = rawInput.parseRawInput(context)
+    open fun getInput(rawInput: R, context: EndpointContext): I = rawInput.parseRawInput(context)
 
-    suspend fun writeOutput(output: Response<O>, call: ApplicationCall) = call.respond(output)
+    open suspend fun writeOutput(output: Response<O>, call: ApplicationCall) = call.respond(output)
 
     abstract fun internalExecute(input: I, context: EndpointContext): Response<O>
 }

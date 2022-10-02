@@ -30,11 +30,11 @@ abstract class Endpoint<R : RawInput<I>, I : Any, O : Any>(
         }
     }
 
-    open suspend fun getRawInput(call: ApplicationCall): R = call.receive(kRawInput)
+    open suspend fun getRawInput(call: ApplicationCall): R? = call.receive(kRawInput)
 
-    open fun getInput(rawInput: R, context: EndpointContext): I = rawInput.parseRawInput(context)
+    open fun getInput(rawInput: R?, context: EndpointContext): I? = rawInput?.parseRawInput(context)
 
     open suspend fun writeOutput(output: Response<O>, call: ApplicationCall) = call.respond(output)
 
-    abstract fun internalExecute(input: I, context: EndpointContext): Response<O>
+    abstract fun internalExecute(input: I?, context: EndpointContext): Response<O>
 }

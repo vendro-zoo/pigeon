@@ -16,11 +16,9 @@ repositories {
 }
 
 dependencies {
-    implementation("io.ktor:ktor-server-core:2.0.3")
-    implementation("io.ktor:ktor-server-netty:2.0.3")
-    implementation("io.ktor:ktor-server-status-pages:2.0.3")
+    compileOnly("io.ktor:ktor-server-core:2.2.4")
 
-    implementation("it.zoo.vendro:racoon:dev-0.1.5-cf88425")
+    compileOnly("it.zoo.vendro:racoon:0.2.0-2ba6d62")
 
     testImplementation(kotlin("test"))
 }

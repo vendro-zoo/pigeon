@@ -1,7 +1,6 @@
 package it.zoo.vendro.pigeon.result
 
 import it.zoo.vendro.pigeon.exception.EndpointException
-import org.jetbrains.annotations.Contract
 
 class EndpointResult<T>(
     /**
@@ -11,13 +10,13 @@ class EndpointResult<T>(
     val message: String?,
     val data: T?
 ) {
-    fun throwIfError() {
+    fun tryThrow() {
         if (status == EndpointResultStatus.ERROR)
             throw EndpointException(message)
     }
 
-    fun getOrThrow(): T? {
-        throwIfError()
+    fun unwrap(): T? {
+        tryThrow()
         return data
     }
 }

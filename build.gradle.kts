@@ -18,8 +18,6 @@ repositories {
 dependencies {
     compileOnly("io.ktor:ktor-server-core:2.2.4")
 
-    compileOnly("it.zoo.vendro:racoon:0.2.0-2ba6d62")
-
     testImplementation(kotlin("test"))
 }
 

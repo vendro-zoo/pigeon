@@ -6,25 +6,25 @@ suspend fun <I, M, P, O> Endpoint<*, *, *, *>.chainFullEndpoint(
     nextEndpoint: Endpoint<I, M, P, O>,
     input: I
 ): O? =
-    chainFullEndpointWrapped(nextEndpoint, input).getOrThrow()
+    chainFullEndpointWrapped(nextEndpoint, input).unwrap()
 
 suspend fun <M, P, O> Endpoint<*, *, *, *>.chainManipulatedEndpoint(
     nextEndpoint: Endpoint<*, M, P, O>,
     manipulated: M
 ): O? =
-    chainManipulatedEndpointWrapped(nextEndpoint, manipulated).getOrThrow()
+    chainManipulatedEndpointWrapped(nextEndpoint, manipulated).unwrap()
 
 suspend fun <I, M, P> Endpoint<*, *, *, *>.chainProcessedEndpoint(
     nextEndpoint: Endpoint<I, M, P, *>,
     input: I
 ): P? =
-    chainProcessedEndpointWrapped(nextEndpoint, input).getOrThrow()
+    chainProcessedEndpointWrapped(nextEndpoint, input).unwrap()
 
 suspend fun <M, P> Endpoint<*, *, *, *>.chainEndpoint(
     nextEndpoint: Endpoint<*, M, P, *>,
     manipulated: M
 ): P? =
-    chainEndpointWrapped(nextEndpoint, manipulated).getOrThrow()
+    chainEndpointWrapped(nextEndpoint, manipulated).unwrap()
 
 suspend fun <I, M, P, O> Endpoint<*, *, *, *>.chainFullEndpointWrapped(
     nextEndpoint: Endpoint<I, M, P, O>,

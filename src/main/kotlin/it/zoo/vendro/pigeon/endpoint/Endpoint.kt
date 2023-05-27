@@ -3,12 +3,11 @@ package it.zoo.vendro.pigeon.endpoint
 import io.ktor.server.application.*
 import io.ktor.server.response.*
 import it.zoo.vendro.pigeon.EndpointConfiguration
-import it.zoo.vendro.pigeon.context.CommonKeys
 import it.zoo.vendro.pigeon.context.EndpointContext
-import it.zoo.vendro.pigeon.endpoint.expansions.ContextShortcutExpansion
 import it.zoo.vendro.pigeon.endpoint.expansions.ResultExpansion
 import it.zoo.vendro.pigeon.exception.EndpointException
 import it.zoo.vendro.pigeon.result.EndpointResult
+import it.zoo.vendro.pigeon.wrapping.SimpleEndpointCallWrapperChain
 import kotlin.reflect.KClass
 import kotlin.reflect.KType
 
@@ -19,11 +18,9 @@ abstract class Endpoint<I, M, P, O>(
     val outputType: KType,
     val endpointConfiguration: EndpointConfiguration = EndpointConfiguration.DEFAULT
         ?: throw IllegalArgumentException("EndpointConfiguration.DEFAULT is null, please set it before using the Endpoint class or pass a custom EndpointConfiguration to the Endpoint constructor")
-) : ResultExpansion, ContextShortcutExpansion {
-    final override var context: EndpointContext =
-        EndpointContext().also {
-            it[CommonKeys.CONNECTION_MANAGER] = null
-        }
+) : ResultExpansion {
+    final var context: EndpointContext =
+        EndpointContext()
         private set
 
     init {
@@ -46,16 +43,16 @@ abstract class Endpoint<I, M, P, O>(
     abstract suspend fun manipulate(input: I, context: EndpointContext): M
 
     suspend fun call(call: ApplicationCall) {
-        val input = transformWrapper(call, context)
 
-        endpointConfiguration.connectionPool.getManager().use { manager ->
-            writeResponse(call) {
-                context[CommonKeys.CONNECTION_MANAGER] = manager
-                val manipulated = manipulateWrapper(input, context)
-                val processed = processWrapper(manipulated, context)
-                respondWrapper(processed, context)
+        SimpleEndpointCallWrapperChain(endpointConfiguration.wrappers)
+            .chain(call, context) { innerCall, innerContext ->
+                writeResponse(call) {
+                    val input = transformWrapper(innerCall, innerContext)
+                    val manipulated = manipulateWrapper(input, innerContext)
+                    val processed = processWrapper(manipulated, innerContext)
+                    respondWrapper(processed, innerContext)
+                }
             }
-        }
     }
 
     suspend fun processWrapper(manipulated: M, context: EndpointContext) = process(manipulated, context)

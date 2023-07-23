@@ -11,6 +11,23 @@ import it.zoo.vendro.pigeon.wrapping.SimpleEndpointCallWrapperChain
 import kotlin.reflect.KClass
 import kotlin.reflect.KType
 
+
+/**
+ * Represents an abstract class for an endpoint.
+ *
+ * @param I the input type for the endpoint (the raw type extracted from the request)
+ * @param M the manipulated type for the endpoint (the type after the conversion to entity)
+ * @param P the processed type for the endpoint (the type after the evaluation of the endpoint)
+ * @param O the output type for the endpoint (the type after the conversion to response)
+ * @param inputType the KType of the input type
+ * @param manipulatedType the KType of the manipulated type
+ * @param processedType the KType of the processed type
+ * @param outputType the KType of the output type
+ * @param endpointConfiguration the configuration for the endpoint
+ *
+ * @throws IllegalArgumentException if any of the type parameters are not of type KClass
+ * @throws IllegalArgumentException if the default endpoint configuration is null
+ */
 abstract class Endpoint<I, M, P, O>(
     val inputType: KType,
     val manipulatedType: KType,
@@ -19,7 +36,7 @@ abstract class Endpoint<I, M, P, O>(
     val endpointConfiguration: EndpointConfiguration = EndpointConfiguration.DEFAULT
         ?: throw IllegalArgumentException("EndpointConfiguration.DEFAULT is null, please set it before using the Endpoint class or pass a custom EndpointConfiguration to the Endpoint constructor")
 ) : ResultExpansion {
-    final var context: EndpointContext =
+    var context: EndpointContext =
         EndpointContext()
         private set
 
@@ -43,14 +60,19 @@ abstract class Endpoint<I, M, P, O>(
     abstract suspend fun manipulate(input: I, context: EndpointContext): M
 
     suspend fun call(call: ApplicationCall) {
-
         SimpleEndpointCallWrapperChain(endpointConfiguration.wrappers)
             .chain(call, context) { innerCall, innerContext ->
-                writeResponse(call) {
+                writeResponse(innerCall) {
+                    endpointConfiguration.wrappers.forEach { it.onStart(innerCall, innerContext) }
                     val input = transformWrapper(innerCall, innerContext)
+                    endpointConfiguration.wrappers.forEach { it.afterTransform(innerCall, innerContext) }
                     val manipulated = manipulateWrapper(input, innerContext)
+                    endpointConfiguration.wrappers.forEach { it.afterManipulate(innerCall, innerContext) }
                     val processed = processWrapper(manipulated, innerContext)
-                    respondWrapper(processed, innerContext)
+                    endpointConfiguration.wrappers.forEach { it.afterProcess(innerCall, innerContext) }
+                    val output = respondWrapper(processed, innerContext)
+                    endpointConfiguration.wrappers.forEach { it.afterRespond(innerCall, innerContext, output) }
+                    output
                 }
             }
     }
@@ -63,16 +85,23 @@ abstract class Endpoint<I, M, P, O>(
 
     abstract suspend fun respond(processed: EndpointResult<P>, context: EndpointContext): EndpointResult<O>
 
-    suspend fun writeResponse(call: ApplicationCall, block: suspend () -> EndpointResult<O>) {
+    suspend fun writeResponse(call: ApplicationCall, block: suspend () -> EndpointResult<O>): EndpointResult<O> {
         try {
             val result = block()
             call.respond(result)
-        } catch (e: EndpointException) {
-            call.respond(e.toResult())
-            throw e
+            return result
         } catch (e: Exception) {
-            call.respond(EndpointException(e.message, e).toResult())
+            handleException(e, call)
             throw e
+        }
+    }
+
+    private suspend fun handleException(e: Exception, call: ApplicationCall) {
+        if (e is EndpointException) {
+            if (endpointConfiguration.writeResponseIfError) call.respond(e.toResult())
+        } else {
+            e.printStackTrace()
+            if (endpointConfiguration.writeResponseIfError) call.respond(EndpointException(e.message, e).toResult())
         }
     }
 

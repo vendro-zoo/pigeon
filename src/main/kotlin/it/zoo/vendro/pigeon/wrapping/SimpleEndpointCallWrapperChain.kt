@@ -2,6 +2,7 @@ package it.zoo.vendro.pigeon.wrapping
 
 import io.ktor.server.application.*
 import it.zoo.vendro.pigeon.context.EndpointContext
+import it.zoo.vendro.pigeon.result.EndpointResult
 
 class SimpleEndpointCallWrapperChain(val wrappers: List<EndpointCallWrapper>) : EndpointCallWrapperChain {
     var currentIndex = 0
@@ -9,7 +10,7 @@ class SimpleEndpointCallWrapperChain(val wrappers: List<EndpointCallWrapper>) : 
     override suspend fun chain(
         call: ApplicationCall,
         context: EndpointContext,
-        block: suspend (call: ApplicationCall, context: EndpointContext) -> Unit
+        block: suspend (call: ApplicationCall, context: EndpointContext) -> EndpointResult<*>
     ) {
         if (currentIndex < wrappers.size) {
             wrappers[currentIndex++].onCall(this, call, context, block)

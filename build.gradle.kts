@@ -16,7 +16,7 @@ repositories {
 }
 
 dependencies {
-    compileOnly("io.ktor:ktor-server-core:2.2.4")
+    compileOnly("io.ktor:ktor-server-core:2.3.2")
 
     testImplementation(kotlin("test"))
 }

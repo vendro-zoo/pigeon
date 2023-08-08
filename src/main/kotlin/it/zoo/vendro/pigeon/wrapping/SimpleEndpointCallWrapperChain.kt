@@ -11,8 +11,8 @@ class SimpleEndpointCallWrapperChain(val wrappers: List<EndpointCallWrapper>) : 
         call: ApplicationCall,
         context: EndpointContext,
         block: suspend (call: ApplicationCall, context: EndpointContext) -> EndpointResult<*>
-    ) {
-        if (currentIndex < wrappers.size) {
+    ): EndpointResult<*> {
+        return if (currentIndex < wrappers.size) {
             wrappers[currentIndex++].onCall(this, call, context, block)
         } else {
             block(call, context)

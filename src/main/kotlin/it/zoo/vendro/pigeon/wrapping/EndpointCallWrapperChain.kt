@@ -9,5 +9,5 @@ interface EndpointCallWrapperChain {
         call: ApplicationCall,
         context: EndpointContext,
         block: suspend (call: ApplicationCall, context: EndpointContext) -> EndpointResult<*>
-    )
+    ): EndpointResult<*>
 }

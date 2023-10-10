@@ -38,7 +38,7 @@ abstract class Endpoint<I, M, P, O>(
 ) : ResultExpansion {
     var context: EndpointContext =
         EndpointContext()
-        private set
+        internal set
 
     init {
         inputType.classifier as? KClass<*>

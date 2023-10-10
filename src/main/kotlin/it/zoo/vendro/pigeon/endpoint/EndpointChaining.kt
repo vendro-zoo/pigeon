@@ -31,6 +31,7 @@ suspend fun <I, M, P, O> Endpoint<*, *, *, *>.chainFullEndpointWrapped(
     input: I
 ): EndpointResult<O> =
     Endpoint.toResponse {
+        nextEndpoint.context = context
         val manipulated = nextEndpoint.manipulateWrapper(input, context)
         val processed = nextEndpoint.processWrapper(manipulated, context)
         nextEndpoint.respondWrapper(processed, context)
@@ -41,6 +42,7 @@ suspend fun <M, P, O> Endpoint<*, *, *, *>.chainManipulatedEndpointWrapped(
     manipulated: M
 ): EndpointResult<O> =
     Endpoint.toResponse {
+        nextEndpoint.context = context
         val processed = nextEndpoint.processWrapper(manipulated, context)
         nextEndpoint.respondWrapper(processed, context)
     }
@@ -50,6 +52,7 @@ suspend fun <I, M, P> Endpoint<*, *, *, *>.chainProcessedEndpointWrapped(
     input: I
 ): EndpointResult<P> =
     Endpoint.toResponse {
+        nextEndpoint.context = context
         val manipulated = nextEndpoint.manipulateWrapper(input, context)
         nextEndpoint.processWrapper(manipulated, context)
     }
@@ -59,5 +62,6 @@ suspend fun <M, P> Endpoint<*, *, *, *>.chainEndpointWrapped(
     manipulated: M
 ): EndpointResult<P> =
     Endpoint.toResponse {
+        nextEndpoint.context = context
         nextEndpoint.processWrapper(manipulated, context)
     }

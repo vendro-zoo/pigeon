@@ -22,7 +22,6 @@ sealed class TypedEndpointResult<out E, out V> {
     }
 
     abstract fun final(): FinalEndpointResult<*>
-
 }
 
 inline fun <E, V, N> TypedEndpointResult<E, V>.flatMap(f: (value: V) -> TypedEndpointResult<E, N>): TypedEndpointResult<E, N> {
@@ -49,6 +48,22 @@ inline fun <E, V, N> TypedEndpointResult<E, V>.map(f: (value: V) -> N): TypedEnd
 inline fun <E, V, N> TypedEndpointResult<E, V>.mapError(f: (error: E) -> N): TypedEndpointResult<N, V> {
     contract { callsInPlace(f, InvocationKind.AT_MOST_ONCE) }
     return flatMapError { TypedEndpointResult.Error(f(it)) }
+}
+
+inline fun <E, V, N> TypedEndpointResult<E, V>.isOk(predicate: (V) -> Boolean = { true }): Boolean {
+    contract {
+        returns(true) implies (this@isOk is TypedEndpointResult.Ok)
+        callsInPlace(predicate, InvocationKind.AT_MOST_ONCE)
+    }
+    return this is TypedEndpointResult.Ok<V> && predicate(value)
+}
+
+inline fun <E, V, N> TypedEndpointResult<E, V>.isError(predicate: (E) -> Boolean = { true }): Boolean {
+    contract {
+        returns(true) implies (this@isError is TypedEndpointResult.Error)
+        callsInPlace(predicate, InvocationKind.AT_MOST_ONCE)
+    }
+    return this is TypedEndpointResult.Error<E> && predicate(error)
 }
 
 data class FinalEndpointResult<V>(val status: EndpointResultStatus, val value: V) {

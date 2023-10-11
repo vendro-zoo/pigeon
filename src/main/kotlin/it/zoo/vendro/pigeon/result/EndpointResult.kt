@@ -2,6 +2,7 @@
 
 package it.zoo.vendro.pigeon.result
 
+import arrow.core.Either
 import arrow.core.raise.Raise
 import arrow.core.raise.recover
 import kotlin.contracts.ExperimentalContracts
@@ -71,6 +72,11 @@ value class EndpointResultRaise<E>(val raise: Raise<TypedEndpointResult<E, Nothi
     fun <A> TypedEndpointResult<E, A>.bind(): A = when (this) {
         is TypedEndpointResult.Ok -> value
         is TypedEndpointResult.Error -> raise.raise(this)
+    }
+
+    fun <A> Either<E, A>.bindEither(): A = when (this) {
+        is Either.Left -> raise.raise(TypedEndpointResult.Error(value))
+        is Either.Right -> value
     }
 
     fun error(error: E): Nothing = raise(TypedEndpointResult.Error(error))

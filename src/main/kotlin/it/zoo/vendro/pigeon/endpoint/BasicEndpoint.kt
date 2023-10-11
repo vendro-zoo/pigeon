@@ -13,6 +13,6 @@ abstract class BasicEndpoint<I, O>(
     processedType = outputType,
     outputType = outputType
 ) {
-    override suspend fun manipulate(input: I, context: EndpointContext) = input
+    override suspend fun manipulate(input: EndpointResult<I>, context: EndpointContext) = input
     override suspend fun respond(processed: EndpointResult<O>, context: EndpointContext) = processed
 }

@@ -16,7 +16,10 @@ repositories {
 }
 
 dependencies {
+    implementation(platform("io.arrow-kt:arrow-stack:1.2.0"))
+
     compileOnly("io.ktor:ktor-server-core:2.3.2")
+    implementation("io.arrow-kt:arrow-core")
 
     testImplementation(kotlin("test"))
 }

@@ -4,7 +4,6 @@ import io.ktor.server.application.*
 import io.ktor.server.response.*
 import it.zoo.vendro.pigeon.EndpointConfiguration
 import it.zoo.vendro.pigeon.context.EndpointContext
-import it.zoo.vendro.pigeon.endpoint.expansions.ResultExpansion
 import it.zoo.vendro.pigeon.exception.EndpointException
 import it.zoo.vendro.pigeon.result.EndpointResult
 import it.zoo.vendro.pigeon.wrapping.SimpleEndpointCallWrapperChain
@@ -35,7 +34,7 @@ abstract class Endpoint<I, M, P, O>(
     val outputType: KType,
     val endpointConfiguration: EndpointConfiguration = EndpointConfiguration.DEFAULT
         ?: throw IllegalArgumentException("EndpointConfiguration.DEFAULT is null, please set it before using the Endpoint class or pass a custom EndpointConfiguration to the Endpoint constructor")
-) : ResultExpansion {
+) {
     var context: EndpointContext =
         EndpointContext()
         internal set
@@ -53,11 +52,11 @@ abstract class Endpoint<I, M, P, O>(
 
     suspend fun transformWrapper(call: ApplicationCall, context: EndpointContext) = transform(call, context)
 
-    abstract suspend fun transform(call: ApplicationCall, context: EndpointContext): I
+    abstract suspend fun transform(call: ApplicationCall, context: EndpointContext): EndpointResult<I>
 
-    suspend fun manipulateWrapper(input: I, context: EndpointContext) = manipulate(input, context)
+    suspend fun manipulateWrapper(input: EndpointResult<I>, context: EndpointContext) = manipulate(input, context)
 
-    abstract suspend fun manipulate(input: I, context: EndpointContext): M
+    abstract suspend fun manipulate(input: EndpointResult<I>, context: EndpointContext): EndpointResult<M>
 
     suspend fun call(call: ApplicationCall) {
         SimpleEndpointCallWrapperChain(endpointConfiguration.wrappers)
@@ -77,9 +76,9 @@ abstract class Endpoint<I, M, P, O>(
             }
     }
 
-    suspend fun processWrapper(manipulated: M, context: EndpointContext) = process(manipulated, context)
+    suspend fun processWrapper(manipulated: EndpointResult<M>, context: EndpointContext) = process(manipulated, context)
 
-    abstract suspend fun process(manipulated: M, context: EndpointContext): EndpointResult<P>
+    abstract suspend fun process(manipulated: EndpointResult<M>, context: EndpointContext): EndpointResult<P>
 
     suspend fun respondWrapper(processed: EndpointResult<P>, context: EndpointContext) = respond(processed, context)
 
@@ -88,7 +87,7 @@ abstract class Endpoint<I, M, P, O>(
     suspend fun writeResponse(call: ApplicationCall, block: suspend () -> EndpointResult<O>): EndpointResult<O> {
         try {
             val result = block()
-            call.respond(result)
+            call.respond(result.final())
             return result
         } catch (e: Exception) {
             handleException(e, call)
@@ -98,22 +97,10 @@ abstract class Endpoint<I, M, P, O>(
 
     private suspend fun handleException(e: Exception, call: ApplicationCall) {
         if (e is EndpointException) {
-            if (endpointConfiguration.writeResponseIfError) call.respond(e.toResult())
+            if (endpointConfiguration.writeResponseIfError) call.respond(e.toResult().final())
         } else {
             e.printStackTrace()
-            if (endpointConfiguration.writeResponseIfError) call.respond(EndpointException(e.message, e).toResult())
-        }
-    }
-
-    companion object {
-        inline fun <O> toResponse(block: () -> EndpointResult<O>): EndpointResult<O> {
-            return try {
-                block()
-            } catch (e: EndpointException) {
-                e.toTypedResult()
-            } catch (e: Exception) {
-                EndpointException(e.message, e).toTypedResult()
-            }
+            if (endpointConfiguration.writeResponseIfError) call.respond(EndpointException(e.message, e).toResult().final())
         }
     }
 }

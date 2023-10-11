@@ -2,6 +2,8 @@ package it.zoo.vendro.pigeon.endpoint
 
 import io.ktor.server.application.*
 import it.zoo.vendro.pigeon.context.EndpointContext
+import it.zoo.vendro.pigeon.result.EndpointResult
+import it.zoo.vendro.pigeon.result.TypedEndpointResult
 import kotlin.reflect.KType
 import kotlin.reflect.typeOf
 
@@ -14,6 +16,6 @@ abstract class SupplierEndpoint<P, O>(
     processedType = processedType,
     outputType = outputType
 ) {
-    override suspend fun transform(call: ApplicationCall, context: EndpointContext) = null
-    override suspend fun manipulate(input: Unit?, context: EndpointContext) = null
+    override suspend fun transform(call: ApplicationCall, context: EndpointContext) = TypedEndpointResult.Ok(null)
+    override suspend fun manipulate(input: EndpointResult<Unit?>, context: EndpointContext) = input
 }
